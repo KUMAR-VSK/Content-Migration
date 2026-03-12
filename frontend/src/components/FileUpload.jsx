@@ -15,23 +15,20 @@ import {
     ChevronDown,
     Settings,
     Circle,
-    Check,
-    Plus,
-    Files,
-    ArrowRight
+    Check
 } from 'lucide-react';
 
 const FileUpload = () => {
-    // State management
-    const [documents, setDocuments] = useState([]);
-    const [step, setStep] = useState(1); // 1: Queue, 2: Preview/Edit, 3: Success
+    const [file, setFile] = useState(null);
+    const [title, setTitle] = useState('');
     const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState(1); // 1: Upload, 2: Preview/Edit, 3: Success
+    const [parsedHtml, setParsedHtml] = useState('');
     const [error, setError] = useState('');
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [globalProgress, setGlobalProgress] = useState({ current: 0, total: 0 });
-    const [currentEditIndex, setCurrentEditIndex] = useState(0);
-
+    const [taskProgress, setTaskProgress] = useState([]);
+    
     const fileInputRef = useRef(null);
 
     // Fetch categories on mount
@@ -42,6 +39,7 @@ const FileUpload = () => {
     const fetchCategories = async () => {
         try {
             const res = await axios.get('http://localhost:8080/api/migrate/categories');
+            // Support both direct array and {data: []} from Document360
             const cats = Array.isArray(res.data) ? res.data : (res.data.data || []);
             setCategories(cats);
         } catch (err) {
@@ -50,338 +48,578 @@ const FileUpload = () => {
     };
 
     const handleFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        addFilesToList(files);
-    };
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) return;
 
-    const addFilesToList = (files) => {
-        const newDocs = files.map(file => {
-            if (!file.name.toLowerCase().endsWith('.docx')) {
-                setError(`File "${file.name}" ignored. Only .docx files supported.`);
-                return null;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                setError(`File "${file.name}" ignored. Max size 10MB.`);
-                return null;
-            }
-            return {
-                id: Math.random().toString(36).substr(2, 9),
-                file: file,
-                title: file.name.replace('.docx', ''),
-                htmlContent: '',
-                status: 'pending', // pending, parsing, parsed, migrating, migrated, error
-                error: ''
-            };
-        }).filter(Boolean);
+        if (!selectedFile.name.toLowerCase().endsWith('.docx')) {
+            setError('Validation Error: Only Microsoft Word (.docx) files are supported.');
+            setFile(null);
+            return;
+        }
 
-        setDocuments(prev => [...prev, ...newDocs]);
+        const MAX_SIZE = 10 * 1024 * 1024;
+        if (selectedFile.size > MAX_SIZE) {
+            setError('Validation Error: File size exceeds the 10MB limit.');
+            setFile(null);
+            return;
+        }
+
+        setFile(selectedFile);
+        if (!title) setTitle(selectedFile.name.replace('.docx', ''));
         setError('');
     };
 
-    const removeDoc = (index) => {
-        setDocuments(prev => prev.filter((_, i) => i !== index));
-    };
-
-    const updateDocTitle = (index, newTitle) => {
-        setDocuments(prev => {
-            const copy = [...prev];
-            copy[index].title = newTitle;
-            return copy;
-        });
-    };
-
-    const processAll = async () => {
-        if (documents.length === 0) return;
-        setLoading(true);
-        setGlobalProgress({ current: 0, total: documents.length });
-
-        for (let i = 0; i < documents.length; i++) {
-            if (documents[i].status === 'parsed') continue;
-
-            setDocuments(prev => prev.map((doc, idx) => i === idx ? { ...doc, status: 'parsing' } : doc));
-            setGlobalProgress(prev => ({ ...prev, current: i + 1 }));
-
-            const formData = new FormData();
-            formData.append('file', documents[i].file);
-
-            try {
-                const res = await axios.post('http://localhost:8080/api/migrate/parse', formData);
-                setDocuments(prev => prev.map((doc, idx) => i === idx ? { ...doc, status: 'parsed', htmlContent: res.data } : doc));
-            } catch (err) {
-                setDocuments(prev => prev.map((doc, idx) => i === idx ? { ...doc, status: 'error', error: err.response?.data || err.message } : doc));
-            }
+    const startProcessing = async () => {
+        if (!file || !title) {
+            setError('Form Error: Please provide both an article title and a .docx file.');
+            return;
         }
-        setLoading(false);
-        setStep(2);
-        setCurrentEditIndex(0);
+
+        setLoading(true);
+        setTaskProgress([
+            { id: 1, label: 'Uploading File', status: 'loading' },
+            { id: 2, label: 'Parsing Word Structure', status: 'pending' },
+            { id: 3, label: 'Converting to Semantic HTML', status: 'pending' }
+        ]);
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // Step 1: Upload (simulated split for UX)
+            await new Promise(r => setTimeout(r, 600));
+            setTaskProgress(prev => prev.map(t => t.id === 1 ? { ...t, status: 'done' } : t.id === 2 ? { ...t, status: 'loading' } : t));
+
+            // Step 2 & 3: Parse & Convert
+            const res = await axios.post('http://localhost:8080/api/migrate/parse', formData);
+            
+            await new Promise(r => setTimeout(r, 800));
+            setTaskProgress(prev => prev.map(t => t.id === 2 ? { ...t, status: 'done' } : t.id === 3 ? { ...t, status: 'loading' } : t));
+            
+            await new Promise(r => setTimeout(r, 600));
+            setTaskProgress(prev => prev.map(t => t.id === 3 ? { ...t, status: 'done' } : t));
+            
+            await new Promise(r => setTimeout(r, 400));
+            setParsedHtml(res.data);
+            setStep(2);
+            setError('');
+        } catch (err) {
+            setError('Processing Failed: ' + (err.response?.data || err.message));
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const migrateAll = async () => {
+    const handleMigrate = async () => {
         setLoading(true);
-        setGlobalProgress({ current: 0, total: documents.length });
+        setTaskProgress([
+            { id: 1, label: 'Preparing Metadata', status: 'loading' },
+            { id: 2, label: 'Sending to Document360 API', status: 'pending' },
+            { id: 3, label: 'Finalizing Article', status: 'pending' }
+        ]);
+        
+        const payload = {
+            title: title,
+            content: parsedHtml,
+            categoryId: selectedCategory || null
+        };
 
-        for (let i = 0; i < documents.length; i++) {
-            if (documents[i].status === 'migrated') continue;
+        try {
+            await new Promise(r => setTimeout(r, 500));
+            setTaskProgress(prev => prev.map(t => t.id === 1 ? { ...t, status: 'done' } : t.id === 2 ? { ...t, status: 'loading' } : t));
 
-            setDocuments(prev => prev.map((doc, idx) => i === idx ? { ...doc, status: 'migrating' } : doc));
-            setGlobalProgress(prev => ({ ...prev, current: i + 1 }));
-
-            const payload = {
-                title: documents[i].title,
-                content: documents[i].htmlContent,
-                categoryId: selectedCategory || null
-            };
-
-            try {
-                await axios.post('http://localhost:8080/api/migrate', payload);
-                setDocuments(prev => prev.map((doc, idx) => i === idx ? { ...doc, status: 'migrated' } : doc));
-            } catch (err) {
-                setDocuments(prev => prev.map((doc, idx) => i === idx ? { ...doc, status: 'error', error: err.response?.data || err.message } : doc));
-                setLoading(false);
-                return; // Stop if one fails
-            }
+            await axios.post('http://localhost:8080/api/migrate', payload);
+            
+            setTaskProgress(prev => prev.map(t => t.id === 2 ? { ...t, status: 'done' } : t.id === 3 ? { ...t, status: 'loading' } : t));
+            await new Promise(r => setTimeout(r, 700));
+            setTaskProgress(prev => prev.map(t => t.id === 3 ? { ...t, status: 'done' } : t));
+            
+            await new Promise(r => setTimeout(r, 300));
+            setStep(3);
+            setError('');
+        } catch (err) {
+            setError('Migration Failed: ' + (err.response?.data || err.message));
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-        setStep(3);
+    };
+
+    const downloadHtml = () => {
+        const blob = new Blob([parsedHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/\s+/g, '_')}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     const reset = () => {
-        setDocuments([]);
+        setFile(null);
+        setTitle('');
         setStep(1);
+        setParsedHtml('');
         setError('');
         setSelectedCategory('');
-        setLoading(false);
     };
 
-    const currentDoc = documents[currentEditIndex];
+    const StatusTracker = ({ tasks }) => (
+        <div style={styles.trackerContainer}>
+            {tasks.map((task) => (
+                <div key={task.id} style={styles.trackerItem}>
+                    <div style={{
+                        ...styles.trackerIcon,
+                        backgroundColor: task.status === 'done' ? '#10b981' : task.status === 'loading' ? '#6366f1' : '#e2e8f0',
+                        color: task.status === 'pending' ? '#94a3b8' : 'white'
+                    }}>
+                        {task.status === 'done' ? <Check size={14} /> : task.status === 'loading' ? <Loader2 size={14} className="spinner" /> : <Circle size={10} fill="#94a3b8" />}
+                    </div>
+                    <span style={{ 
+                        ...styles.trackerLabel, 
+                        color: task.status === 'loading' ? '#1e293b' : task.status === 'done' ? '#64748b' : '#94a3b8',
+                        fontWeight: task.status === 'loading' ? 600 : 400
+                    }}>
+                        {task.label}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
-        <div className="migration-card" style={{ maxWidth: step === 2 ? '1000px' : '800px' }}>
+        <div className="migration-card">
             <AnimatePresence mode="wait">
                 {step === 1 && (
-                    <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <div style={styles.headerRow}>
-                            <h3 style={styles.cardHeader}>Document Queue</h3>
-                            <div style={styles.categoryBadge}>
-                                <Settings size={14} />
-                                <select 
-                                    value={selectedCategory} 
-                                    onChange={(e) => setSelectedCategory(e.target.value)}
-                                    style={styles.inlineSelect}
-                                >
-                                    <option value="">Move all to: Root Category</option>
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+                    <motion.div 
+                        key="step1"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                    >
+                        <h3 style={styles.cardHeader}>Upload Document</h3>
+                        
+                        <div style={styles.grid}>
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>Article Title</label>
+                                <input 
+                                    type="text" 
+                                    value={title} 
+                                    onChange={(e) => setTitle(e.target.value)} 
+                                    placeholder="e.g. User Guide"
+                                    style={styles.input}
+                                />
+                            </div>
+
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>Target Category</label>
+                                <div style={styles.selectWrapper}>
+                                    <select 
+                                        value={selectedCategory} 
+                                        onChange={(e) => setSelectedCategory(e.target.value)}
+                                        style={styles.select}
+                                    >
+                                        <option value="">Select Category (Optional)</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.id}>
+                                                {cat.name || cat.title || "Unknown Category"}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown style={styles.selectIcon} size={18} />
+                                </div>
                             </div>
                         </div>
 
                         <div 
-                            style={styles.dropZoneBatch}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => { e.preventDefault(); addFilesToList(Array.from(e.dataTransfer.files)); }}
+                            style={styles.dropZone}
+                            onClick={() => !loading && fileInputRef.current.click()}
                         >
-                            {documents.length === 0 ? (
-                                <div onClick={() => fileInputRef.current.click()} style={{ cursor: 'pointer' }}>
-                                    <Files size={48} color="#6366f1" style={{ marginBottom: '1rem' }} />
-                                    <p style={{ fontWeight: 600 }}>Drag & drop multiple files or click to browse</p>
-                                    <p style={{ fontSize: '0.85rem', color: '#64748b' }}>Supports multiple .docx uploads at once</p>
+                            <input 
+                                type="file" 
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                style={{ display: 'none' }}
+                                accept=".docx"
+                            />
+                            {loading && step === 1 ? (
+                                <StatusTracker tasks={taskProgress} />
+                            ) : file ? (
+                                <div style={styles.fileInfo}>
+                                    <FileText size={48} color="#6366f1" />
+                                    <div style={{ textAlign: 'left' }}>
+                                        <div style={{ fontWeight: 600 }}>{file.name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{(file.size / 1024).toFixed(1)} KB</div>
+                                    </div>
+                                    <button onClick={(e) => {e.stopPropagation(); setFile(null)}} style={styles.removeBtn}><X size={16} /></button>
                                 </div>
                             ) : (
-                                <div style={styles.queueGrid}>
-                                    {documents.map((doc, idx) => (
-                                        <div key={doc.id} style={styles.queueItem}>
-                                            <div style={styles.queueIcon}><FileText size={20} color="#6366f1" /></div>
-                                            <div style={styles.queueDetails}>
-                                                <input 
-                                                    value={doc.title} 
-                                                    onChange={(e) => updateDocTitle(idx, e.target.value)}
-                                                    style={styles.queueInput}
-                                                    placeholder="Enter article title..."
-                                                />
-                                                <span style={styles.queueMeta}>{(doc.file.size / 1024).toFixed(1)} KB</span>
-                                            </div>
-                                            <button onClick={() => removeDoc(idx)} style={styles.removeBtnSmall}><X size={14} /></button>
-                                        </div>
-                                    ))}
-                                    <button onClick={() => fileInputRef.current.click()} style={styles.addMoreBtn}>
-                                        <Plus size={20} /> Add More
-                                    </button>
+                                <div style={styles.uploadPrompt}>
+                                    <div style={styles.uploadIconCircle}>
+                                        <Upload size={32} color="#6366f1" />
+                                    </div>
+                                    <p style={{ fontWeight: 600, color: '#1e293b' }}>Click to upload or drag and drop</p>
+                                    <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Microsoft Word (.docx) files only</p>
                                 </div>
                             )}
-                            <input type="file" ref={fileInputRef} hidden multiple onChange={handleFileChange} accept=".docx" />
                         </div>
 
                         {error && <div style={styles.error}><AlertCircle size={18} /> {error}</div>}
 
                         <button 
-                            onClick={processAll} 
-                            disabled={loading || documents.length === 0}
-                            style={loading || documents.length === 0 ? styles.buttonDisabled : styles.button}
+                            onClick={startProcessing} 
+                            disabled={loading || !file || !title}
+                            style={loading || !file || !title ? styles.buttonDisabled : styles.button}
                         >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="spinner" /> 
-                                    Processing {globalProgress.current} of {globalProgress.total}...
-                                </>
-                            ) : (
-                                <>Start Parsing Queue <ArrowRight size={18} /></>
-                            )}
+                            {loading ? <Loader2 className="spinner" /> : 'Process Document'}
                         </button>
                     </motion.div>
                 )}
 
                 {step === 2 && (
-                    <motion.div key="step2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={styles.previewContainer}>
-                        <div style={styles.editorSidebar}>
-                            <h4 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Files size={18} /> Documents ({documents.length})
-                            </h4>
-                            {documents.map((doc, idx) => (
-                                <div 
-                                    key={doc.id} 
-                                    onClick={() => setCurrentEditIndex(idx)}
-                                    style={{
-                                        ...styles.sidebarItem,
-                                        backgroundColor: currentEditIndex === idx ? '#eff6ff' : 'transparent',
-                                        borderLeft: currentEditIndex === idx ? '4px solid #6366f1' : '4px solid transparent'
-                                    }}
-                                >
-                                    <div style={{...styles.sidebarStatus, backgroundColor: doc.status === 'migrated' ? '#10b981' : doc.status === 'error' ? '#ef4444' : '#6366f1' }}>
-                                        {doc.status === 'migrated' ? <Check size={10} /> : doc.status === 'error' ? <X size={10} /> : idx + 1}
-                                    </div>
-                                    <div style={styles.sidebarLabel}>{doc.title}</div>
-                                </div>
-                            ))}
+                    <motion.div 
+                        key="step2"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 1.05 }}
+                        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                    >
+                        <div style={styles.previewHeader}>
+                            <div>
+                                <h3 style={{ margin: 0, color: '#1e293b' }}>Editor & Preview</h3>
+                                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>Tweak the formatting before migration</p>
+                            </div>
+                            <div style={styles.previewActions}>
+                                <button onClick={downloadHtml} style={styles.iconButton} title="Download HTML">
+                                    <Download size={20} />
+                                </button>
+                                <button onClick={reset} style={styles.iconButton} title="Cancel">
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
 
-                        <div style={styles.editorMain}>
-                            <div style={styles.previewHeaderRow}>
-                                <div>
-                                    <h3 style={{ margin: 0 }}>Editing: {currentDoc?.title}</h3>
-                                    <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>Customize the HTML structure for this article</p>
+                        <div style={styles.editorContainer}>
+                            {loading ? (
+                                <div style={styles.migratingOverlay}>
+                                    <StatusTracker tasks={taskProgress} />
                                 </div>
-                                <div style={styles.batchStats}>
-                                    <span style={styles.statItem}>Ready: {documents.filter(d => d.status === 'parsed').length}</span>
-                                    <button onClick={migrateAll} disabled={loading} style={styles.migrateMiniBtn}>
-                                        {loading ? <Loader2 className="spinner" size={16} /> : <Send size={16} />} Migrate Queue
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div style={styles.editorWrapperBatch}>
-                                {loading && activeTask === 'migrating' && (
-                                    <div style={styles.migratingOverlay}>
-                                        <div style={styles.loadingBox}>
-                                            <Loader2 size={32} className="spinner" color="#6366f1" />
-                                            <p>Migrating document {globalProgress.current} of {globalProgress.total}...</p>
-                                            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>{documents[globalProgress.current-1]?.title}</p>
-                                        </div>
-                                    </div>
-                                )}
+                            ) : (
                                 <ReactQuill 
                                     theme="snow" 
-                                    value={currentDoc?.htmlContent || ''} 
-                                    onChange={(val) => {
-                                        setDocuments(prev => {
-                                            const copy = [...prev];
-                                            copy[currentEditIndex].htmlContent = val;
-                                            return copy;
-                                        });
-                                    }}
-                                    style={{ height: '450px' }}
+                                    value={parsedHtml} 
+                                    onChange={setParsedHtml}
+                                    modules={quillModules}
+                                    style={{ height: '350px' }}
                                 />
+                            )}
+                        </div>
+
+                        <div style={styles.footerActions}>
+                            <div style={styles.infoRow}>
+                                <Settings size={16} color="#64748b" />
+                                <span>Target: {categories.find(c => c.id === selectedCategory)?.name || 'Root Category'}</span>
                             </div>
+                            <button onClick={handleMigrate} disabled={loading} style={styles.button}>
+                                {loading ? <Loader2 className="spinner" /> : <><Send size={18} /> Migrate to Document360</>}
+                            </button>
                         </div>
                     </motion.div>
                 )}
 
                 {step === 3 && (
-                    <motion.div key="step3" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={styles.successGrid}>
-                        <div style={styles.successIconCircleBatch}>
-                            <Check size={48} color="white" />
+                    <motion.div 
+                        key="step3"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={styles.successScreen}
+                    >
+                        <div style={styles.successIconCircleCircle}>
+                            <CheckCircle size={60} color="#10b981" />
                         </div>
-                        <h2>Batch Migration Complete!</h2>
-                        <div style={styles.summaryBox}>
-                            <div style={styles.summaryItem}><span>Total Documents</span> <strong>{documents.length}</strong></div>
-                            <div style={styles.summaryItem}><span>Successfully Migrated</span> <strong style={{color: '#10b981'}}>{documents.filter(d => d.status === 'migrated').length}</strong></div>
-                            <div style={styles.summaryItem}><span>Target Category</span> <strong>{categories.find(c => c.id === selectedCategory)?.name || 'Root'}</strong></div>
-                        </div>
-                        <div style={styles.buttonRow}>
-                            <button onClick={reset} style={styles.button}>Start New Batch</button>
-                        </div>
+                        <h2 style={{ marginBottom: '0.5rem' }}>Migration Successful!</h2>
+                        <p style={{ color: '#64748b', textAlign: 'center', maxWidth: '80%' }}>
+                            Your article "<strong>{title}</strong>" has been created and is now available in Document360.
+                        </p>
+                        <button onClick={reset} style={styles.outlineButton}>Migrate Another Document</button>
                     </motion.div>
                 )}
             </AnimatePresence>
-
             <style>{`
                 .spinner { animation: rotate 2s linear infinite; }
                 @keyframes rotate { 100% { transform: rotate(360deg); } }
-                .quill { border-radius: 12px; border: 1px solid #e2e8f0 !important; }
-                .ql-toolbar { border-radius: 12px 12px 0 0; background: #f8fafc !important; }
-                .ql-container { min-height: 400px; }
+                .quill { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0 !important; }
+                .ql-toolbar { border-top: none !important; border-left: none !important; border-right: none !important; background: #f8fafc !important; }
+                .ql-container { border: none !important; font-family: inherit !important; font-size: 1rem !important; }
+                .ql-editor { min-height: 300px; max-height: 350px; overflow-y: auto; }
             `}</style>
         </div>
     );
 };
 
+const quillModules = {
+    toolbar: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        ['link', 'image', 'clean']
+    ],
+};
+
 const styles = {
-    cardHeader: { fontSize: '1.75rem', fontWeight: 800, margin: 0, color: '#1e293b' },
-    headerRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' },
-    categoryBadge: { display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', padding: '6px 12px', borderRadius: '10px' },
-    inlineSelect: { border: 'none', background: 'transparent', fontSize: '0.85rem', fontWeight: 600, outline: 'none', cursor: 'pointer' },
-    dropZoneBatch: {
+    cardHeader: {
+        fontSize: '1.75rem',
+        fontWeight: 800,
+        marginBottom: '1.5rem',
+        color: '#1e293b',
+        textAlign: 'left'
+    },
+    grid: {
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '1.5rem',
+        marginBottom: '1.5rem'
+    },
+    inputGroup: {
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    label: {
+        fontSize: '0.875rem',
+        fontWeight: 600,
+        marginBottom: '0.6rem',
+        color: '#475569'
+    },
+    input: {
+        padding: '12px 16px',
+        borderRadius: '12px',
+        border: '2px solid #e2e8f0',
+        fontSize: '1rem',
+        outline: 'none',
+        transition: 'all 0.2s',
+        backgroundColor: '#fff',
+    },
+    selectWrapper: {
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center'
+    },
+    select: {
+        width: '100%',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        border: '2px solid #e2e8f0',
+        appearance: 'none',
+        fontSize: '1rem',
+        backgroundColor: '#fff',
+        outline: 'none',
+        cursor: 'pointer'
+    },
+    selectIcon: {
+        position: 'absolute',
+        right: '12px',
+        pointerEvents: 'none',
+        color: '#64748b'
+    },
+    dropZone: {
         border: '2px dashed #cbd5e1',
-        borderRadius: '24px',
-        padding: '2rem',
-        backgroundColor: 'rgba(248, 250, 252, 0.4)',
-        minHeight: '300px',
-        marginBottom: '2rem'
+        borderRadius: '20px',
+        padding: '3rem 1.5rem',
+        textAlign: 'center',
+        cursor: 'pointer',
+        backgroundColor: 'rgba(248, 250, 252, 0.5)',
+        marginBottom: '2rem',
+        position: 'relative',
+        transition: 'all 0.3s',
+        minHeight: '200px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
-    queueGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' },
-    queueItem: { 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '1rem', 
-        background: 'white', 
-        padding: '12px', 
-        borderRadius: '16px', 
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+    uploadIconCircle: {
+        width: '64px',
+        height: '64px',
+        borderRadius: '50%',
+        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto 1rem'
     },
-    queueDetails: { flex: 1, display: 'flex', flexDirection: 'column' },
-    queueInput: { border: 'none', fontWeight: 600, fontSize: '0.9rem', outline: 'none', width: '100%', color: '#334155' },
-    queueMeta: { fontSize: '0.75rem', color: '#94a3b8' },
-    addMoreBtn: { 
-        border: '2px dashed #e2e8f0', 
-        borderRadius: '16px', 
-        background: 'transparent', 
-        color: '#6366f1', 
-        fontWeight: 600, 
+    uploadPrompt: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.25rem',
+    },
+    fileInfo: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1.25rem',
+        justifyContent: 'center',
+        color: '#1e293b',
+    },
+    removeBtn: {
+        background: '#fee2e2',
+        border: 'none',
+        padding: '6px',
+        borderRadius: '50%',
+        cursor: 'pointer',
+        color: '#ef4444',
+        display: 'flex',
+        marginLeft: '10px'
+    },
+    button: {
+        width: '100%',
+        padding: '16px',
+        borderRadius: '14px',
+        border: 'none',
+        backgroundColor: '#6366f1',
+        color: 'white',
+        fontSize: '1rem',
+        fontWeight: 700,
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.5rem',
-        padding: '12px'
+        gap: '0.75rem',
+        transition: 'all 0.2s',
+        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
     },
-    button: { width: '100%', padding: '16px', borderRadius: '16px', background: '#6366f1', color: 'white', border: 'none', fontWeight: 700, cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '0.75rem' },
-    previewContainer: { display: 'grid', gridTemplateColumns: '250px 1fr', gap: '2rem', minHeight: '600px' },
-    editorSidebar: { borderRight: '1px solid #e2e8f0', paddingRight: '1.5rem', textAlign: 'left' },
-    sidebarItem: { display: 'flex', alignItems: 'center', gap: '1rem', padding: '12px', borderRadius: '12px', cursor: 'pointer', marginBottom: '0.5rem', transition: 'all 0.2s' },
-    sidebarStatus: { width: '20px', height: '20px', borderRadius: '50%', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', flexShrink: 0 },
-    sidebarLabel: { fontSize: '0.85rem', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
-    editorMain: { display: 'flex', flexDirection: 'column', gap: '1.5rem' },
-    previewHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', textAlign: 'left' },
-    batchStats: { display: 'flex', alignItems: 'center', gap: '1rem' },
-    statItem: { fontSize: '0.85rem', fontWeight: 600, color: '#64748b' },
-    migrateMiniBtn: { background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', display: 'flex', gap: '0.5rem' },
-    editorWrapperBatch: { position: 'relative', borderRadius: '12px', background: 'white' },
-    migratingOverlay: { position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    loadingBox: { background: 'white', padding: '2rem', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', textAlign: 'center' },
-    successGrid: { textAlign: 'center', padding: '2rem' },
-    successIconCircleBatch: { background: '#10b981', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 8px 16px rgba(16, 185, 129, 0.3)' },
-    summaryBox: { background: '#f8fafc', borderRadius: '20px', padding: '1.5rem', width: '100%', maxWidth: '400px', margin: '2rem auto', border: '1px solid #e2e8f0' },
-    summaryItem: { display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.95rem' }
+    buttonDisabled: {
+        width: '100%',
+        padding: '16px',
+        borderRadius: '14px',
+        border: 'none',
+        backgroundColor: '#e2e8f0',
+        color: '#94a3b8',
+        fontSize: '1rem',
+        fontWeight: 700,
+        cursor: 'not-allowed'
+    },
+    editorContainer: {
+        marginBottom: '1.5rem',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        position: 'relative',
+        minHeight: '350px'
+    },
+    previewHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: '1.5rem',
+        textAlign: 'left'
+    },
+    previewActions: {
+        display: 'flex',
+        gap: '0.75rem'
+    },
+    iconButton: {
+        background: '#fff',
+        border: '1px solid #e2e8f0',
+        padding: '10px',
+        borderRadius: '10px',
+        cursor: 'pointer',
+        color: '#475569',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s'
+    },
+    footerActions: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem'
+    },
+    infoRow: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        fontSize: '0.875rem',
+        color: '#64748b',
+        justifyContent: 'center'
+    },
+    successScreen: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: '1rem 0'
+    },
+    successIconCircleCircle: {
+        width: '100px',
+        height: '100px',
+        borderRadius: '50%',
+        backgroundColor: '#ecfdf5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: '1.5rem'
+    },
+    outlineButton: {
+        padding: '12px 32px',
+        borderRadius: '12px',
+        border: '2px solid #6366f1',
+        backgroundColor: 'transparent',
+        color: '#6366f1',
+        fontSize: '1rem',
+        fontWeight: 700,
+        cursor: 'pointer',
+        marginTop: '2rem',
+        transition: 'all 0.2s'
+    },
+    error: {
+        color: '#ef4444',
+        fontSize: '0.9rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.6rem',
+        fontWeight: 600,
+        padding: '12px',
+        backgroundColor: '#fef2f2',
+        borderRadius: '10px'
+    },
+    trackerContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        padding: '1rem',
+        textAlign: 'left',
+        width: '100%',
+        maxWidth: '300px'
+    },
+    trackerItem: {
+        display: 'flex',
+        alignItems: 'center', gap: '1rem'
+    },
+    trackerIcon: {
+        width: '24px',
+        height: '24px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+    },
+    trackerLabel: {
+        fontSize: '0.95rem',
+        transition: 'all 0.3s'
+    },
+    migratingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        zIndex: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '12px'
+    }
 };
 
 export default FileUpload;

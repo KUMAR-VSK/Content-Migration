@@ -1,16 +1,16 @@
 
-# Document Migration Application
+# 🚀 Document Migration Tool
 
-A premium full-stack application built with **React.js** and **Spring Boot** to automate the migration of Microsoft Word documents (`.docx`) to **Document360** articles.
+A premium full-stack application built with **React.js** and **Spring Boot** to automate the migration of Microsoft Word documents (`.docx`) to **Document360** articles with high fidelity.
 
 ---
 
 ## ✨ Features
-- **🚀 Batch Processing**: Upload and migrate multiple `.docx` files simultaneously. Manage your document queue with a modern grid interface.
-- **✍️ Inline Rich Text Editor**: Edit and polish each document in the queue directly in the browser using a sidebar-based editor switch.
-- **📂 Bulk Category Assignment**: Assign a target category to the entire batch or individually manage metadata.
-- **📂 Dynamic Category Selection**: Fetch and select target categories directly from your Document360 project structure.
-- **📊 Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep users informed.
+- **🧠 Intelligent Parsing**: Extracts headings, paragraphs, bullet/numbered lists, and complex tables using Apache POI.
+- **🖼️ Image Extraction**: Automatically extracts embedded images from Word docs and embeds them as Base64 in the HTML content.
+- **✍️ Inline Rich Text Editor**: Edit and polish the parsed HTML content directly in the browser using an integrated editor before migrating.
+- **📂 Dynamic Category Selection**: Fetch and select target categories directly from your Document360 project.
+- **📊 Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep you informed.
 - **📄 Live Preview**: Preview the generated HTML content and formatting with realistic rendering.
 - **💾 Local Download**: Option to download the clean HTML file locally to your machine.
 - **🔄 Multi-Step Workflow**: Interactive 3-step UI (Upload -> Preview -> Confirm) powered by **Framer Motion**.
@@ -28,7 +28,7 @@ sequenceDiagram
     participant P as DOCX Parser (Apache POI)
     participant D as Document360 API
 
-    U->>R: Upload .docx file & Set Title/Category
+    U->>R: Upload .docx file & Set Title
     R->>S: POST /api/migrate/parse (File)
     S->>P: Extract Elements & Images
     P->>S: Return Generated HTML
@@ -68,7 +68,7 @@ sequenceDiagram
 - **Java 17** or higher
 - **Node.js 18** or higher
 - **Maven 3.6+**
-- A **Document360 API Token**
+- A **Document360 API Token** and **Project ID**
 
 ### 2. Configuration
 Update the `backend/src/main/resources/application.properties` file:
@@ -107,32 +107,32 @@ npm run dev
 - **`DocxParser.java`**: Critical logic for parsing Word elements and handling image-to-Base64 conversion.
 - **`Document360Client.java`**: Service to interact with Document360 Articles and Categories APIs.
 - **`MigrationController.java`**: REST Controller providing validated endpoints for parsing and migration.
-- **`MigrationRequest.java`**: DTO for handling structured JSON payloads with large HTML content.
+- **`MigrationRequest.java`**: DTO for handling structured JSON payloads.
 
 ### Frontend (`/frontend`)
-- **`FileUpload.jsx`**: The core interactive component managing state transitions, status tracking, and the rich text editor.
+- **`FileUpload.jsx`**: Core interactive component managing file uploads, status tracking, and the editor.
 - **`App.jsx`**: Main layout container with global styles and responsive header.
 
 ---
 
 ## 🛡️ Error Handling & Validation
-The application includes multi-layered validation to ensure data integrity:
-- **✅ File Validation**: Strict checks for `.docx` format in both frontend and backend.
-- **⚖️ Size Limits**: Enforced 10MB file size limit with graceful error reporting.
-- **🧱 API Resilience**: Specific handling for Document360 API failures (401, 403, 500) with diagnostic user feedback.
-- **🛡️ Quality Assurance**: Comprehensive suite of JUnit 5 and Mockito tests covering core parsing and controller logic.
+The application includes multi-layered validation:
+- **✅ File Validation**: Strict checks for `.docx` format.
+- **⚖️ Size Limits**: Enforced 10MB file size limit.
+- **🧱 API Resilience**: Specific handling for Document360 API failures (401, 403, 500).
+- **🛡️ Quality Assurance**: Comprehensive suite of JUnit 5 and Mockito tests.
 
 ---
 
 ## 🔄 Workflow
-1. **Upload**: Enter an article title, select a target category, and upload your `.docx` file.
-2. **Preview & Edit**: View the parsed content and use the inline editor to make final adjustments.
+1. **Upload**: Enter an article title and upload your `.docx` file.
+2. **Preview & Edit**: View the parsed content and use the inline editor for final adjustments.
 3. **Action**:
-    - Click the **Download** icon to save the clean HTML locally.
-    - Click **Migrate to Document360** to trigger the API upload.
-4. **Success**: Receive instant confirmation and view the article details from the API.
+    - Click **Download** to save HTML locally.
+    - Click **Migrate to Document360** for API upload.
+4. **Success**: Receive instant confirmation from the API.
 
 ---
 
 ## 🛡️ License
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License.

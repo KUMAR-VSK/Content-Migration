@@ -28,6 +28,8 @@ public class Document360Client {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("api_token", apiKey);
+        // Add Authorization header for newer tokens
+        headers.set("Authorization", "Bearer " + apiKey);
 
         Map<String, Object> body = new HashMap<>();
         body.put("title", title);
@@ -46,8 +48,9 @@ public class Document360Client {
             String message = "API Error: ";
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) message += "Invalid API Token. Please check your configuration.";
             else if (e.getStatusCode() == HttpStatus.FORBIDDEN) message += "Permission denied. Check your Document360 plan/settings.";
-            else message += e.getStatusText();
-            log.error("Document360 API Client Error: {}", e.getMessage());
+            else if (e.getStatusCode() == HttpStatus.NOT_FOUND) message += "Endpoint not found. Check your Project ID.";
+            else message += e.getResponseBodyAsString();
+            log.error("Document360 API Client Error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException(message);
         } catch (Exception e) {
             log.error("Error calling Document360 API: {}", e.getMessage());
@@ -56,19 +59,30 @@ public class Document360Client {
     }
 
     public String getCategories() {
-        String url = String.format("https://apihub.document360.io/v1/Projects/%s/Categories", projectId);
+        // Primary Attempt: V2 ProjectVersions endpoint (Recommended for newer projects)
+        String urlV2 = String.format("https://apihub.document360.io/v2/ProjectVersions/%s/categories", projectId);
         
         HttpHeaders headers = new HttpHeaders();
         headers.set("api_token", apiKey);
+        headers.set("Authorization", "Bearer " + apiKey);
         
         HttpEntity<Void> request = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, request, String.class);
+            log.info("Attempting to fetch categories via V2 API...");
+            ResponseEntity<String> response = restTemplate.exchange(urlV2, HttpMethod.GET, request, String.class);
             return response.getBody();
         } catch (Exception e) {
-            log.error("Error fetching categories: {}", e.getMessage());
-            return "[]";
+            log.warn("V2 category fetch failed, trying V1 Projects endpoint: {}", e.getMessage());
+            // Fallback Attempt: V1 Projects endpoint
+            try {
+                String urlV1 = String.format("https://apihub.document360.io/v1/Projects/%s/Categories", projectId);
+                ResponseEntity<String> fallbackResponse = restTemplate.exchange(urlV1, HttpMethod.GET, request, String.class);
+                return fallbackResponse.getBody();
+            } catch (Exception ex) {
+                log.error("All category fetch attempts failed: {}", ex.getMessage());
+                return "[]";
+            }
         }
     }
 }
