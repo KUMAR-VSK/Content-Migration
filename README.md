@@ -13,9 +13,11 @@ A premium full-stack application built with **React.js** and **Spring Boot** to 
 - **Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep you informed.
 - **Live Preview**: Preview the generated HTML content and formatting with realistic rendering.
 - **Local Download**: Option to download the clean HTML file locally to your machine.
-- **Multi-Step Workflow**: Interactive 3-step UI (Upload -> Preview -> Confirm) powered by **Framer Motion**.
-- **Swagger Documentation**: Built-in API documentation and sandbox for testing endpoints.
-- **Premium UI**: Modern glassmorphism design with responsive elements and scanning animations.
+- **Interactive Drag & Drop**: Magnetic drop zone that visually responds to files hovering over the browser.
+- **Fluid Layout Transitions**: Smoothly morphing layout animations using **Framer Motion**.
+- **Modern Toast Notifications**: Polished error and success messages powered by **Sonner**.
+- **Skeleton Loading UI**: Shimmering layout placeholders to create a fast, seamless transition between steps.
+- **Premium Static UI**: Modern glassmorphism design contained within a native-feeling, non-scrollable desktop app layout.
 
 ---
 
@@ -51,6 +53,7 @@ sequenceDiagram
 - **React Quill** (Inline rich text editing)
 - **Framer Motion** (Smooth transitions and animations)
 - **Lucide React** (Vector icons)
+- **Sonner** (Modern toast notifications)
 - **Axios** (API communication)
 
 ### Backend
