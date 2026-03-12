@@ -349,10 +349,21 @@ const FileUpload = () => {
             <style>{`
                 .spinner { animation: rotate 2s linear infinite; }
                 @keyframes rotate { 100% { transform: rotate(360deg); } }
-                .quill { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0 !important; }
+                .quill { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0 !important; background: white; }
                 .ql-toolbar { border-top: none !important; border-left: none !important; border-right: none !important; background: #f8fafc !important; }
-                .ql-container { border: none !important; font-family: inherit !important; font-size: 1rem !important; }
-                .ql-editor { min-height: 300px; max-height: 350px; overflow-y: auto; }
+                .ql-container { 
+                    border: none !important; 
+                    font-family: inherit !important; 
+                    font-size: 1rem !important;
+                    background-image: linear-gradient(rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+                    background-size: 100% 2rem;
+                }
+                .ql-editor { 
+                    min-height: 450px; 
+                    overflow-y: visible; 
+                    padding: 2rem !important;
+                    line-height: 2rem !important;
+                }
             `}</style>
         </div>
     );
