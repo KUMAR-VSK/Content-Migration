@@ -43,6 +43,7 @@ cd backend
 ./mvnw spring-boot:run
 ```
 The backend will run on `http://localhost:8080`.
+You can access the **Swagger UI** for API testing at: `http://localhost:8080/swagger-ui.html`
 
 ### 3. Run Frontend
 ```bash
