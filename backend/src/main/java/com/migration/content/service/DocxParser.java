@@ -15,7 +15,7 @@ public class DocxParser {
 
         for (IBodyElement element : document.getBodyElements()) {
             if (element instanceof XWPFParagraph) {
-                processParagraph((XWPFParagraph) element, html);
+                processParagraph(document, (XWPFParagraph) element, html);
             } else if (element instanceof XWPFTable) {
                 processTable((XWPFTable) element, html);
             }
@@ -23,7 +23,7 @@ public class DocxParser {
         return html.toString();
     }
 
-    private void processParagraph(XWPFParagraph paragraph, StringBuilder html) {
+    private void processParagraph(XWPFDocument document, XWPFParagraph paragraph, StringBuilder html) {
         String style = paragraph.getStyleID();
         
         if (paragraph.getText() == null || paragraph.getText().trim().isEmpty()) {
@@ -57,9 +57,14 @@ public class DocxParser {
                 }
             } else if (run instanceof XWPFHyperlinkRun) {
                 XWPFHyperlinkRun linkRun = (XWPFHyperlinkRun) run;
-                html.append("<a href='").append(linkRun.getHyperlink().getURL()).append("'>")
-                    .append(linkRun.getText())
-                    .append("</a>");
+                String text = linkRun.getText(0);
+                if (text != null) {
+                    XWPFHyperlink hyperlink = linkRun.getHyperlink(document);
+                    String url = (hyperlink != null) ? hyperlink.getURL() : "#";
+                    html.append("<a href='").append(url).append("'>")
+                        .append(text)
+                        .append("</a>");
+                }
             }
         }
         

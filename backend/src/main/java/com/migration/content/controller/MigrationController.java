@@ -22,7 +22,20 @@ public class MigrationController {
     private final DocxParser docxParser;
     private final Document360Client document360Client;
 
-    @PostMapping(consumes = "multipart/form-data")
+    @PostMapping(value = "/parse", consumes = "multipart/form-data")
+    @Operation(summary = "Parse Word document to HTML", description = "Converts .docx to HTML and returns the content for preview/download")
+    public ResponseEntity<String> parseDocument(
+            @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) return ResponseEntity.badRequest().body("File is empty");
+            String htmlContent = docxParser.convertToHtml(file.getInputStream());
+            return ResponseEntity.ok(htmlContent);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Parsing failed: " + e.getMessage());
+        }
+    }
+
+    @PostMapping
     @Operation(
         summary = "Migrate a Word document",
         description = "Parses a .docx file and creates a corresponding article in Document360",
