@@ -3,6 +3,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
+import { toast } from 'sonner';
 import './FileUpload.css';
 import { 
     Upload, 
@@ -53,14 +54,14 @@ const FileUpload = () => {
         if (!selectedFile) return;
 
         if (!selectedFile.name.toLowerCase().endsWith('.docx')) {
-            setError('Validation Error: Only Microsoft Word (.docx) files are supported.');
+            toast.error('Validation Error: Only Microsoft Word (.docx) files are supported.');
             setFile(null);
             return;
         }
 
         const MAX_SIZE = 10 * 1024 * 1024;
         if (selectedFile.size > MAX_SIZE) {
-            setError('Validation Error: File size exceeds the 10MB limit.');
+            toast.error('Validation Error: File size exceeds the 10MB limit.');
             setFile(null);
             return;
         }
@@ -100,10 +101,11 @@ const FileUpload = () => {
 
     const startProcessing = async () => {
         if (!file || !title) {
-            setError('Form Error: Please provide both an article title and a .docx file.');
+            toast.error('Form Error: Please provide both an article title and a .docx file.');
             return;
         }
 
+        setStep(2);
         setLoading(true);
         setTaskProgress([
             { id: 1, label: 'Uploading File', status: 'loading' },
@@ -128,11 +130,10 @@ const FileUpload = () => {
             
             await new Promise(r => setTimeout(r, 400));
             setParsedHtml(res.data);
-            setStep(2);
-            setError('');
+            setLoading(false);
         } catch (err) {
-            setError('Processing Failed: ' + (err.response?.data || err.message));
-        } finally {
+            toast.error('Processing Failed: ' + (err.response?.data || err.message));
+            setStep(1);
             setLoading(false);
         }
     };
@@ -168,7 +169,7 @@ const FileUpload = () => {
         } catch (err) {
             const status = err.response ? err.response.status : 'Network Error';
             console.error(`[Document360 Migration] Failed with HTTP Status Code: ${status}`);
-            setError('Migration Failed: ' + (err.response?.data || err.message));
+            toast.error('Migration Failed: ' + (err.response?.data || err.message));
         } finally {
             setLoading(false);
         }
@@ -297,7 +298,6 @@ const FileUpload = () => {
                             )}
                         </div>
 
-                        {error && <div className="error-message"><AlertCircle size={18} /> {error}</div>}
 
                         <button 
                             onClick={startProcessing} 
@@ -335,7 +335,18 @@ const FileUpload = () => {
                         <div className="editor-preview-container">
                             {loading ? (
                                 <div className="overlay-container">
-                                    <StatusTracker tasks={taskProgress} />
+                                    <div className="skeleton-overlay">
+                                        <div className="skeleton-line" style={{ width: '40%', height: '24px', marginBottom: '20px' }} />
+                                        <div className="skeleton-line" style={{ width: '90%' }} />
+                                        <div className="skeleton-line" style={{ width: '95%' }} />
+                                        <div className="skeleton-line" style={{ width: '80%', marginBottom: '20px' }} />
+                                        <div className="skeleton-line" style={{ width: '95%' }} />
+                                        <div className="skeleton-line" style={{ width: '85%' }} />
+                                        <div className="skeleton-line" style={{ width: '30%' }} />
+                                    </div>
+                                    <div className="tracker-glass-box">
+                                        <StatusTracker tasks={taskProgress} />
+                                    </div>
                                 </div>
                             ) : (
                                 <ReactQuill 

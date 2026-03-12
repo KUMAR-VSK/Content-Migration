@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { Toaster } from 'sonner'
 import './App.css'
 import FileUpload from './components/FileUpload'
 
 function App() {
   return (
     <div className="App">
+      <Toaster position="top-right" richColors expand={true} />
       <header className="App-header">
         <h1>Document Migration Tool</h1>
         <p>Convert and Upload Microsoft Word documents to Document360 articles easily.</p>
