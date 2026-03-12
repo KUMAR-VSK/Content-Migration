@@ -13,19 +13,23 @@ import {
     Loader2, 
     X,
     ChevronDown,
-    Settings
+    Settings,
+    Circle,
+    Check
 } from 'lucide-react';
 
 const FileUpload = () => {
     const [file, setFile] = useState(null);
     const [title, setTitle] = useState('');
-    const [status, setStatus] = useState('');
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1); // 1: Upload, 2: Preview/Edit, 3: Success
     const [parsedHtml, setParsedHtml] = useState('');
     const [error, setError] = useState('');
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [activeTask, setActiveTask] = useState(null); // 'parsing' or 'migrating'
+    const [taskProgress, setTaskProgress] = useState([]);
+    
     const fileInputRef = useRef(null);
 
     // Fetch categories on mount
@@ -36,9 +40,6 @@ const FileUpload = () => {
     const fetchCategories = async () => {
         try {
             const res = await axios.get('http://localhost:8080/api/migrate/categories');
-            // Assuming res.data is the JSON from Document360
-            // The API usually returns an object with a 'data' array or just an array
-            // We'll handle it robustly
             const cats = Array.isArray(res.data) ? res.data : (res.data.data || []);
             setCategories(cats);
         } catch (err) {
@@ -50,14 +51,12 @@ const FileUpload = () => {
         const selectedFile = e.target.files[0];
         if (!selectedFile) return;
 
-        // Validation 1: File Type
         if (!selectedFile.name.toLowerCase().endsWith('.docx')) {
             setError('Validation Error: Only Microsoft Word (.docx) files are supported.');
             setFile(null);
             return;
         }
 
-        // Validation 2: Max File Size (10MB)
         const MAX_SIZE = 10 * 1024 * 1024;
         if (selectedFile.size > MAX_SIZE) {
             setError('Validation Error: File size exceeds the 10MB limit.');
@@ -76,24 +75,50 @@ const FileUpload = () => {
         }
 
         setLoading(true);
-        setError('');
+        setActiveTask('processing');
+        setTaskProgress([
+            { id: 1, label: 'Uploading File', status: 'loading' },
+            { id: 2, label: 'Parsing Word Structure', status: 'pending' },
+            { id: 3, label: 'Converting to Semantic HTML', status: 'pending' }
+        ]);
+
         const formData = new FormData();
         formData.append('file', file);
 
         try {
+            // Step 1: Upload (simulated split for UX)
+            await new Promise(r => setTimeout(r, 600));
+            setTaskProgress(prev => prev.map(t => t.id === 1 ? { ...t, status: 'done' } : t.id === 2 ? { ...t, status: 'loading' } : t));
+
+            // Step 2 & 3: Parse & Convert
             const res = await axios.post('http://localhost:8080/api/migrate/parse', formData);
+            
+            await new Promise(r => setTimeout(r, 800));
+            setTaskProgress(prev => prev.map(t => t.id === 2 ? { ...t, status: 'done' } : t.id === 3 ? { ...t, status: 'loading' } : t));
+            
+            await new Promise(r => setTimeout(r, 600));
+            setTaskProgress(prev => prev.map(t => t.id === 3 ? { ...t, status: 'done' } : t));
+            
+            await new Promise(r => setTimeout(r, 400));
             setParsedHtml(res.data);
             setStep(2);
             setError('');
         } catch (err) {
-            setError('Parsing Failed: ' + (err.response?.data || err.message));
+            setError('Processing Failed: ' + (err.response?.data || err.message));
         } finally {
             setLoading(false);
+            setActiveTask(null);
         }
     };
 
     const handleMigrate = async () => {
         setLoading(true);
+        setActiveTask('migrating');
+        setTaskProgress([
+            { id: 1, label: 'Preparing Metadata', status: 'loading' },
+            { id: 2, label: 'Sending to Document360 API', status: 'pending' },
+            { id: 3, label: 'Finalizing Article', status: 'pending' }
+        ]);
         
         const params = new URLSearchParams();
         params.append('title', title);
@@ -103,13 +128,23 @@ const FileUpload = () => {
         }
 
         try {
+            await new Promise(r => setTimeout(r, 500));
+            setTaskProgress(prev => prev.map(t => t.id === 1 ? { ...t, status: 'done' } : t.id === 2 ? { ...t, status: 'loading' } : t));
+
             await axios.post('http://localhost:8080/api/migrate', params);
+            
+            setTaskProgress(prev => prev.map(t => t.id === 2 ? { ...t, status: 'done' } : t.id === 3 ? { ...t, status: 'loading' } : t));
+            await new Promise(r => setTimeout(r, 700));
+            setTaskProgress(prev => prev.map(t => t.id === 3 ? { ...t, status: 'done' } : t));
+            
+            await new Promise(r => setTimeout(r, 300));
             setStep(3);
             setError('');
         } catch (err) {
             setError('Migration Failed: ' + (err.response?.data || err.message));
         } finally {
             setLoading(false);
+            setActiveTask(null);
         }
     };
 
@@ -132,7 +167,31 @@ const FileUpload = () => {
         setParsedHtml('');
         setError('');
         setSelectedCategory('');
+        setActiveTask(null);
     };
+
+    const StatusTracker = ({ tasks }) => (
+        <div style={styles.trackerContainer}>
+            {tasks.map((task) => (
+                <div key={task.id} style={styles.trackerItem}>
+                    <div style={{
+                        ...styles.trackerIcon,
+                        backgroundColor: task.status === 'done' ? '#10b981' : task.status === 'loading' ? '#6366f1' : '#e2e8f0',
+                        color: task.status === 'pending' ? '#94a3b8' : 'white'
+                    }}>
+                        {task.status === 'done' ? <Check size={14} /> : task.status === 'loading' ? <Loader2 size={14} className="spinner" /> : <Circle size={10} fill="#94a3b8" />}
+                    </div>
+                    <span style={{ 
+                        ...styles.trackerLabel, 
+                        color: task.status === 'loading' ? '#1e293b' : task.status === 'done' ? '#64748b' : '#94a3b8',
+                        fontWeight: task.status === 'loading' ? 600 : 400
+                    }}>
+                        {task.label}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
         <div className="migration-card">
@@ -168,7 +227,7 @@ const FileUpload = () => {
                                     >
                                         <option value="">Select Category (Optional)</option>
                                         {categories.map(cat => (
-                                            <option key={cat.id || cat.id} value={cat.id || cat.id}>
+                                            <option key={cat.id} value={cat.id}>
                                                 {cat.name || cat.title}
                                             </option>
                                         ))}
@@ -180,7 +239,7 @@ const FileUpload = () => {
 
                         <div 
                             style={styles.dropZone}
-                            onClick={() => fileInputRef.current.click()}
+                            onClick={() => !loading && fileInputRef.current.click()}
                         >
                             <input 
                                 type="file" 
@@ -189,7 +248,9 @@ const FileUpload = () => {
                                 style={{ display: 'none' }}
                                 accept=".docx"
                             />
-                            {file ? (
+                            {loading && activeTask === 'processing' ? (
+                                <StatusTracker tasks={taskProgress} />
+                            ) : file ? (
                                 <div style={styles.fileInfo}>
                                     <FileText size={48} color="#6366f1" />
                                     <div style={{ textAlign: 'left' }}>
@@ -245,13 +306,19 @@ const FileUpload = () => {
                         </div>
 
                         <div style={styles.editorContainer}>
-                            <ReactQuill 
-                                theme="snow" 
-                                value={parsedHtml} 
-                                onChange={setParsedHtml}
-                                modules={quillModules}
-                                style={{ height: '350px' }}
-                            />
+                            {loading && activeTask === 'migrating' ? (
+                                <div style={styles.migratingOverlay}>
+                                    <StatusTracker tasks={taskProgress} />
+                                </div>
+                            ) : (
+                                <ReactQuill 
+                                    theme="snow" 
+                                    value={parsedHtml} 
+                                    onChange={setParsedHtml}
+                                    modules={quillModules}
+                                    style={{ height: '350px' }}
+                                />
+                            )}
                         </div>
 
                         <div style={styles.footerActions}>
@@ -287,7 +354,7 @@ const FileUpload = () => {
             <style>{`
                 .spinner { animation: rotate 2s linear infinite; }
                 @keyframes rotate { 100% { transform: rotate(360deg); } }
-                .quill { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0 !react-important; }
+                .quill { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0 !important; }
                 .ql-toolbar { border-top: none !important; border-left: none !important; border-right: none !important; background: #f8fafc !important; }
                 .ql-container { border: none !important; font-family: inherit !important; font-size: 1rem !important; }
                 .ql-editor { min-height: 300px; max-height: 350px; overflow-y: auto; }
@@ -337,7 +404,6 @@ const styles = {
         outline: 'none',
         transition: 'all 0.2s',
         backgroundColor: '#fff',
-        '&:focus': { borderColor: '#6366f1', boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.1)' }
     },
     selectWrapper: {
         position: 'relative',
@@ -370,7 +436,11 @@ const styles = {
         backgroundColor: 'rgba(248, 250, 252, 0.5)',
         marginBottom: '2rem',
         position: 'relative',
-        transition: 'all 0.3s'
+        transition: 'all 0.3s',
+        minHeight: '200px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     uploadIconCircle: {
         width: '64px',
@@ -436,7 +506,9 @@ const styles = {
     editorContainer: {
         marginBottom: '1.5rem',
         backgroundColor: 'white',
-        borderRadius: '12px'
+        borderRadius: '12px',
+        position: 'relative',
+        minHeight: '350px'
     },
     previewHeader: {
         display: 'flex',
@@ -513,6 +585,46 @@ const styles = {
         padding: '12px',
         backgroundColor: '#fef2f2',
         borderRadius: '10px'
+    },
+    trackerContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        padding: '1rem',
+        textAlign: 'left',
+        width: '100%',
+        maxWidth: '300px'
+    },
+    trackerItem: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem'
+    },
+    trackerIcon: {
+        width: '24px',
+        height: '24px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+    },
+    trackerLabel: {
+        fontSize: '0.95rem',
+        transition: 'all 0.3s'
+    },
+    migratingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        zIndex: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '12px'
     }
 };
 

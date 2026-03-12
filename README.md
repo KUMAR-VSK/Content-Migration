@@ -9,6 +9,7 @@ A premium full-stack application built with **React.js** and **Spring Boot** to 
 - **Intelligent Parsing**: Extracts headings, paragraphs, bullet/numbered lists, and tables using Apache POI.
 - **🖼️ Image Extraction**: Automatically extracts embedded images from Word docs and embeds them as Base64 in the HTML content.
 - **📄 Live Preview**: Preview the generated HTML content and formatting before committing the migration.
+- **📊 Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep users informed.
 - **💾 Local Download**: Option to download the clean HTML file locally to your machine.
 - **🔄 Multi-Step Workflow**: Interactive 3-step UI (Upload -> Preview -> Confirm) powered by **Framer Motion**.
 - **🔗 Hyperlink Support**: Maintains all document hyperlinks during conversion.
