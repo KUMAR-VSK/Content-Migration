@@ -6,9 +6,9 @@ A premium full-stack application built with **React.js** and **Spring Boot** to 
 ---
 
 ## ✨ Features
-- **🚀 Intelligent Parsing**: Extracts headings, paragraphs, bullet/numbered lists, and tables using Apache POI.
-- **🖼️ Image Extraction**: Automatically extracts embedded images from Word docs and embeds them as Base64 in the HTML content.
-- **✍️ Inline Rich Text Editor**: Edit and polish the parsed HTML content directly in the browser using an integrated editor before migrating.
+- **🚀 Batch Processing**: Upload and migrate multiple `.docx` files simultaneously. Manage your document queue with a modern grid interface.
+- **✍️ Inline Rich Text Editor**: Edit and polish each document in the queue directly in the browser using a sidebar-based editor switch.
+- **📂 Bulk Category Assignment**: Assign a target category to the entire batch or individually manage metadata.
 - **📂 Dynamic Category Selection**: Fetch and select target categories directly from your Document360 project structure.
 - **📊 Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep users informed.
 - **📄 Live Preview**: Preview the generated HTML content and formatting with realistic rendering.

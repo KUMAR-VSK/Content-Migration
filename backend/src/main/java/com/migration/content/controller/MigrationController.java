@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -17,6 +18,7 @@ import java.util.Objects;
 @RestController
 @RequestMapping("/api/migrate")
 @RequiredArgsConstructor
+@Slf4j
 @CrossOrigin(origins = "*") // Allow React to connect
 @Tag(name = "Migration API", description = "Endpoints for migrating documents to Document360")
 public class MigrationController {
@@ -62,16 +64,23 @@ public class MigrationController {
         summary = "Create article in Document360",
         description = "Takes final HTML content and title to create an article"
     )
-    public ResponseEntity<String> migrateDocument(
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
-            @RequestParam(value = "categoryId", required = false) String categoryId) {
-        
+    public ResponseEntity<String> migrateDocument(@RequestBody com.migration.content.dto.MigrationRequest request) {
         try {
-            String result = document360Client.createArticle(title, content, categoryId);
+            if (request.getTitle() == null || request.getTitle().isEmpty()) {
+                return ResponseEntity.badRequest().body("Validation Error: Article title is required.");
+            }
+            if (request.getContent() == null || request.getContent().isEmpty()) {
+                return ResponseEntity.badRequest().body("Validation Error: Article content is empty.");
+            }
+
+            String result = document360Client.createArticle(request.getTitle(), request.getContent(), request.getCategoryId());
             return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            log.error("Migration failed: {}", e.getMessage());
+            return ResponseEntity.status(500).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Migration failed: " + e.getMessage());
+            log.error("Unexpected migration error", e);
+            return ResponseEntity.status(500).body("Migration failed: An unexpected error occurred.");
         }
     }
 }
