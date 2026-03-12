@@ -35,35 +35,25 @@ public class MigrationController {
         }
     }
 
+    @GetMapping("/categories")
+    @Operation(summary = "Get categories from Document360")
+    public ResponseEntity<String> getCategories() {
+        return ResponseEntity.ok(document360Client.getCategories());
+    }
+
     @PostMapping
     @Operation(
-        summary = "Migrate a Word document",
-        description = "Parses a .docx file and creates a corresponding article in Document360",
-        responses = {
-            @ApiResponse(responseCode = "200", description = "Migration successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid input or empty file"),
-            @ApiResponse(responseCode = "500", description = "Migration failed internally")
-        }
+        summary = "Create article in Document360",
+        description = "Takes final HTML content and title to create an article"
     )
     public ResponseEntity<String> migrateDocument(
-            @Parameter(description = "The .docx file to upload", required = true)
-            @RequestParam("file") MultipartFile file,
-            @Parameter(description = "The title of the article to be created", required = true)
-            @RequestParam("title") String title) {
+            @RequestParam("title") String title,
+            @RequestParam("content") String content,
+            @RequestParam(value = "categoryId", required = false) String categoryId) {
         
         try {
-            if (file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is empty");
-            }
-
-            // 1. Parse Word Doc to HTML
-            String htmlContent = docxParser.convertToHtml(file.getInputStream());
-
-            // 2. Upload to Document360
-            String result = document360Client.createArticle(title, htmlContent);
-
+            String result = document360Client.createArticle(title, content, categoryId);
             return ResponseEntity.ok(result);
-            
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Migration failed: " + e.getMessage());
         }
