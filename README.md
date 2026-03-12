@@ -1,76 +1,93 @@
 
 # Document Migration Application
 
-A full-stack application built with React.js and Spring Boot to automate the migration of Microsoft Word documents (.docx) to Document360 articles.
-
-## Features
-- **File Upload**: Simple drag-and-drop or file selection for .docx files.
-- **Automated Parsing**: Extracts headings, paragraphs, lists, and tables using Apache POI.
-- **HTML Conversion**: Converts Word structure into clean, semantic HTML.
-- **API Integration**: Direct upload to Document360 via their Article Creation API.
-- **CORS Enabled**: Backend configured to allow frontend communication.
+A premium full-stack application built with **React.js** and **Spring Boot** to automate the migration of Microsoft Word documents (`.docx`) to **Document360** articles.
 
 ---
 
-## Tech Stack
-- **Frontend**: React.js (Vite), Axios, CSS3
-- **Backend**: Spring Boot (Java 17+), Maven
-- **Library**: Apache POI (5.2.3)
-- **Integration**: Document360 REST API
+## ✨ Features
+- **Intelligent Parsing**: Extracts headings, paragraphs, bullet/numbered lists, and tables using Apache POI.
+- **🖼️ Image Extraction**: Automatically extracts embedded images from Word docs and embeds them as Base64 in the HTML content.
+- **📄 Live Preview**: Preview the generated HTML content and formatting before committing the migration.
+- **💾 Local Download**: Option to download the clean HTML file locally to your machine.
+- **🔄 Multi-Step Workflow**: Interactive 3-step UI (Upload -> Preview -> Confirm) powered by **Framer Motion**.
+- **🔗 Hyperlink Support**: Maintains all document hyperlinks during conversion.
+- **🔍 Swagger Documentation**: Built-in API documentation and sandbox for testing endpoints.
+- **🎨 Premium UI**: Modern glassmorphism design with responsive elements and scanning animations.
 
 ---
 
-## Prerequisites
-- Java 17 or higher
-- Node.js 18 or higher
-- Maven 3.6+
-- Document360 API Token
+## 🛠️ Tech Stack
+
+### Frontend
+- **React 18** (Vite)
+- **Framer Motion** (Smooth transitions and animations)
+- **Lucide React** (Vector icons)
+- **Axios** (API communication)
+
+### Backend
+- **Spring Boot 3.x** (Java 17+)
+- **Apache POI 5.2.3** (Word document processing)
+- **SpringDoc OpenAPI** (Swagger/OpenAPI documentation)
+- **Lombok** (Boilerplate reduction)
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-### 1. Document360 Setup
-Get your API Token from Document360 and update `backend/src/main/resources/application.properties`:
+### 1. Prerequisites
+- **Java 17** or higher
+- **Node.js 18** or higher
+- **Maven 3.6+**
+- A **Document360 API Token**
+
+### 2. Configuration
+Update the `backend/src/main/resources/application.properties` file:
 ```properties
 document360.api.key=YOUR_API_TOKEN
 document360.project.id=YOUR_PROJECT_ID
 ```
 
-### 2. Run Backend
+### 3. Run the Backend
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
-The backend will run on `http://localhost:8080`.
-You can access the **Swagger UI** for API testing at: `http://localhost:8080/swagger-ui.html`
+- **Base URL**: `http://localhost:8080`
+- **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 
-### 3. Run Frontend
+### 4. Run the Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The frontend will run on `http://localhost:5173` (or similar).
+- **URL**: `http://localhost:5173`
 
 ---
 
-## Project Structure
+## 📂 Project Architecture
 
 ### Backend (`/backend`)
-- `DocxParser.java`: Core logic for parsing .docx and converting to HTML.
-- `Document360Client.java`: Service to interact with the Document360 API.
-- `MigrationController.java`: REST endpoint for file uploading.
+- **`DocxParser.java`**: Critical logic for parsing Word elements and handling image-to-Base64 conversion.
+- **`Document360Client.java`**: Handles authenticated POST requests to the Document360 Articles API.
+- **`MigrationController.java`**: REST Controller providing parsing (preview) and migration (upload) endpoints.
 
 ### Frontend (`/frontend`)
-- `FileUpload.jsx`: React component managing the file selection and API call.
-- `App.jsx`: Main entry point with UI layout.
+- **`FileUpload.jsx`**: The core interactive component managing state transitions, animations, and file management.
+- **`App.jsx`**: Main layout container with global styles and header.
 
 ---
 
-## Usage
-1. Open the React application in your browser.
-2. Enter the desired **Title** for your article.
-3. Select the **.docx** file you want to migrate.
-4. Click **Migrate to Document360**.
-5. Wait for the success message and view the API response.
+## 🔄 Workflow
+1. **Upload**: Enter an article title and select your `.docx` file.
+2. **Preview**: View the parsed HTML content. Use the "Scanning" animation to track processing.
+3. **Action**:
+    - Click the **Download** icon to save the HTML locally.
+    - Click **Confirm Migration** to upload to Document360.
+4. **Success**: Receive instant confirmation and article details from the API.
+
+---
+
+## 🛡️ License
+Distributed under the MIT License. See `LICENSE` for more information.
