@@ -1,25 +1,25 @@
 
-# 🚀 Document Migration Tool
+# Document Migration Tool
 
 A premium full-stack application built with **React.js** and **Spring Boot** to automate the migration of Microsoft Word documents (`.docx`) to **Document360** articles with high fidelity.
 
 ---
 
-## ✨ Features
-- **🧠 Intelligent Parsing**: Extracts headings, paragraphs, bullet/numbered lists, and complex tables using Apache POI.
-- **🖼️ Image Extraction**: Automatically extracts embedded images from Word docs and embeds them as Base64 in the HTML content.
-- **✍️ Inline Rich Text Editor**: Edit and polish the parsed HTML content directly in the browser using an integrated editor before migrating.
-- **📂 Dynamic Category Selection**: Fetch and select target categories directly from your Document360 project.
-- **📊 Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep you informed.
-- **📄 Live Preview**: Preview the generated HTML content and formatting with realistic rendering.
-- **💾 Local Download**: Option to download the clean HTML file locally to your machine.
-- **🔄 Multi-Step Workflow**: Interactive 3-step UI (Upload -> Preview -> Confirm) powered by **Framer Motion**.
-- **🔍 Swagger Documentation**: Built-in API documentation and sandbox for testing endpoints.
-- **🎨 Premium UI**: Modern glassmorphism design with responsive elements and scanning animations.
+## Features
+- **Intelligent Parsing**: Extracts headings, paragraphs, bullet/numbered lists, and complex tables using Apache POI.
+- **Image Extraction**: Automatically extracts embedded images from Word docs and embeds them as Base64 in the HTML content.
+- **Inline Rich Text Editor**: Edit and polish the parsed HTML content directly in the browser using an integrated editor before migrating.
+- **Dynamic Category Selection**: Fetch and select target categories directly from your Document360 project.
+- **Real-time Status Tracking**: Visual progress tracker with checkpoints (Uploading, Parsing, API Communication) to keep you informed.
+- **Live Preview**: Preview the generated HTML content and formatting with realistic rendering.
+- **Local Download**: Option to download the clean HTML file locally to your machine.
+- **Multi-Step Workflow**: Interactive 3-step UI (Upload -> Preview -> Confirm) powered by **Framer Motion**.
+- **Swagger Documentation**: Built-in API documentation and sandbox for testing endpoints.
+- **Premium UI**: Modern glassmorphism design with responsive elements and scanning animations.
 
 ---
 
-## 📊 Migration Flow
+## Migration Flow
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -44,7 +44,7 @@ sequenceDiagram
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 18** (Vite)
@@ -62,7 +62,7 @@ sequenceDiagram
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - **Java 17** or higher
@@ -101,7 +101,7 @@ npm run dev
 
 ---
 
-## 📂 Project Architecture
+## Project Architecture
 
 ### Backend (`/backend`)
 - **`DocxParser.java`**: Critical logic for parsing Word elements and handling image-to-Base64 conversion.
@@ -115,16 +115,16 @@ npm run dev
 
 ---
 
-## 🛡️ Error Handling & Validation
+## Error Handling & Validation
 The application includes multi-layered validation:
-- **✅ File Validation**: Strict checks for `.docx` format.
-- **⚖️ Size Limits**: Enforced 10MB file size limit.
-- **🧱 API Resilience**: Specific handling for Document360 API failures (401, 403, 500).
-- **🛡️ Quality Assurance**: Comprehensive suite of JUnit 5 and Mockito tests.
+- **File Validation**: Strict checks for `.docx` format.
+- **Size Limits**: Enforced 10MB file size limit.
+- **API Resilience**: Specific handling for Document360 API failures (401, 403, 500).
+- **Quality Assurance**: Comprehensive suite of JUnit 5 and Mockito tests.
 
 ---
 
-## 🔄 Workflow
+## Workflow
 1. **Upload**: Enter an article title and upload your `.docx` file.
 2. **Preview & Edit**: View the parsed content and use the inline editor for final adjustments.
 3. **Action**:
@@ -134,5 +134,5 @@ The application includes multi-layered validation:
 
 ---
 
-## 🛡️ License
+## License
 Distributed under the MIT License.

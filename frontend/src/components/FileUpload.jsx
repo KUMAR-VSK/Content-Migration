@@ -126,7 +126,8 @@ const FileUpload = () => {
             await new Promise(r => setTimeout(r, 500));
             setTaskProgress(prev => prev.map(t => t.id === 1 ? { ...t, status: 'done' } : t.id === 2 ? { ...t, status: 'loading' } : t));
 
-            await axios.post('http://localhost:8080/api/migrate', payload);
+            const res = await axios.post('http://localhost:8080/api/migrate', payload);
+            console.log(`[Document360 Migration] HTTP Status Code: ${res.status}`);
             
             setTaskProgress(prev => prev.map(t => t.id === 2 ? { ...t, status: 'done' } : t.id === 3 ? { ...t, status: 'loading' } : t));
             await new Promise(r => setTimeout(r, 700));
@@ -136,6 +137,8 @@ const FileUpload = () => {
             setStep(3);
             setError('');
         } catch (err) {
+            const status = err.response ? err.response.status : 'Network Error';
+            console.error(`[Document360 Migration] Failed with HTTP Status Code: ${status}`);
             setError('Migration Failed: ' + (err.response?.data || err.message));
         } finally {
             setLoading(false);

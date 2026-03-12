@@ -67,7 +67,7 @@ public class Document360Client {
 
     public String createArticle(String title, String htmlContent, String categoryId) {
         ensureProjectVersionId();
-        String url = "https://apihub.document360.io/v1/Articles";
+        String url = "https://apihub.document360.io/v2/Articles";
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -88,7 +88,7 @@ public class Document360Client {
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-            log.info("Document360 API Response: {}", response.getBody());
+            log.info("Document360 API Response [HTTP {}]: {}", response.getStatusCode(), response.getBody());
             return response.getBody();
         } catch (HttpClientErrorException e) {
             log.error("Document360 API Client Error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
