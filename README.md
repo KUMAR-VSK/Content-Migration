@@ -79,6 +79,15 @@ npm run dev
 
 ---
 
+## 🛡️ Error Handling & Validation
+The application includes multi-layered validation to ensure data integrity:
+- **File Validation**: Both frontend and backend verify that only `.docx` files are uploaded.
+- **Size Limits**: Enforced 10MB file size limit to prevent server overload.
+- **Parsing Errors**: Robust handling of corrupt or password-protected documents with user-friendly error messages.
+- **API Resilience**: Specific handling for Document360 API failures (e.g., 401 Unauthorized, 403 Forbidden) with actionable feedback for the user.
+
+---
+
 ## 🔄 Workflow
 1. **Upload**: Enter an article title and select your `.docx` file.
 2. **Preview**: View the parsed HTML content. Use the "Scanning" animation to track processing.

@@ -10,7 +10,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/migrate")
@@ -27,12 +29,26 @@ public class MigrationController {
     public ResponseEntity<String> parseDocument(
             @RequestParam("file") MultipartFile file) {
         try {
-            if (file.isEmpty()) return ResponseEntity.badRequest().body("File is empty");
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("Validation Error: Please select a file to upload.");
+            }
+            
+            // Validate File Type
+            String filename = file.getOriginalFilename();
+            if (filename == null || !filename.toLowerCase().endsWith(".docx")) {
+                return ResponseEntity.badRequest().body("Validation Error: Only .docx files are supported.");
+            }
+
             String htmlContent = docxParser.convertToHtml(file.getInputStream());
             return ResponseEntity.ok(htmlContent);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Parsing failed: " + e.getMessage());
+            return ResponseEntity.status(500).body("Parsing Error: The document could not be processed. Details: " + e.getMessage());
         }
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        return ResponseEntity.badRequest().body("Validation Error: File size exceeds the 10MB limit.");
     }
 
     @GetMapping("/categories")

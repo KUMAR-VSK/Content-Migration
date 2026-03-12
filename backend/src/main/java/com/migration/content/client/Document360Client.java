@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -41,9 +42,16 @@ public class Document360Client {
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             log.info("Document360 API Response: {}", response.getBody());
             return response.getBody();
+        } catch (HttpClientErrorException e) {
+            String message = "API Error: ";
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) message += "Invalid API Token. Please check your configuration.";
+            else if (e.getStatusCode() == HttpStatus.FORBIDDEN) message += "Permission denied. Check your Document360 plan/settings.";
+            else message += e.getStatusText();
+            log.error("Document360 API Client Error: {}", e.getMessage());
+            throw new RuntimeException(message);
         } catch (Exception e) {
             log.error("Error calling Document360 API: {}", e.getMessage());
-            return "Error: " + e.getMessage();
+            throw new RuntimeException("Integration Error: Could not connect to Document360.");
         }
     }
 

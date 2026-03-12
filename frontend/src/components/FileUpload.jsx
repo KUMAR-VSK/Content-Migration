@@ -48,21 +48,35 @@ const FileUpload = () => {
 
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
-        if (selectedFile && selectedFile.name.endsWith('.docx')) {
-            setFile(selectedFile);
-            setError('');
-        } else {
-            setError('Please select a valid .docx file.');
+        if (!selectedFile) return;
+
+        // Validation 1: File Type
+        if (!selectedFile.name.toLowerCase().endsWith('.docx')) {
+            setError('Validation Error: Only Microsoft Word (.docx) files are supported.');
+            setFile(null);
+            return;
         }
+
+        // Validation 2: Max File Size (10MB)
+        const MAX_SIZE = 10 * 1024 * 1024;
+        if (selectedFile.size > MAX_SIZE) {
+            setError('Validation Error: File size exceeds the 10MB limit.');
+            setFile(null);
+            return;
+        }
+
+        setFile(selectedFile);
+        setError('');
     };
 
     const startProcessing = async () => {
         if (!file || !title) {
-            setError('Please provide both title and file.');
+            setError('Form Error: Please provide both an article title and a .docx file.');
             return;
         }
 
         setLoading(true);
+        setError('');
         const formData = new FormData();
         formData.append('file', file);
 
