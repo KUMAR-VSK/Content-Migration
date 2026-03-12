@@ -4,6 +4,7 @@ import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -26,10 +27,7 @@ public class DocxParser {
     private void processParagraph(XWPFDocument document, XWPFParagraph paragraph, StringBuilder html) {
         String style = paragraph.getStyleID();
         
-        if (paragraph.getText() == null || paragraph.getText().trim().isEmpty()) {
-            return;
-        }
-
+        // Don't return early if empty, might contain images
         String tag = "p";
         if (style != null) {
             if (style.toLowerCase().contains("heading1")) tag = "h1";
@@ -43,10 +41,23 @@ public class DocxParser {
 
         html.append("<").append(tag).append(">");
         
-        // Process Runs for Formatting/Hyperlinks
+        // Process Runs for Formatting/Hyperlinks/Images
         for (IRunElement run : paragraph.getRuns()) {
             if (run instanceof XWPFRun) {
                 XWPFRun xRun = (XWPFRun) run;
+                
+                // 1. Handle Images in Run
+                List<XWPFPicture> pictures = xRun.getEmbeddedPictures();
+                for (XWPFPicture pic : pictures) {
+                    XWPFPictureData data = pic.getPictureData();
+                    byte[] bytes = data.getData();
+                    String base64 = Base64.getEncoder().encodeToString(bytes);
+                    String mimeType = data.getPackagePart().getContentType();
+                    html.append("<br/><img src=\"data:").append(mimeType).append(";base64,")
+                        .append(base64).append("\" style=\"max-width:100%\"/><br/>");
+                }
+
+                // 2. Handle Text in Run
                 String text = xRun.getText(0);
                 if (text != null) {
                     if (xRun.isBold()) html.append("<strong>");
