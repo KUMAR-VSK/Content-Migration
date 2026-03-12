@@ -189,7 +189,7 @@ const FileUpload = () => {
     );
 
     return (
-        <div className="migration-card">
+        <motion.div className="migration-card" layout transition={{ duration: 0.5, type: "spring", bounce: 0.2 }}>
             <AnimatePresence mode="wait">
                 {step === 1 && (
                     <motion.div 
@@ -346,7 +346,7 @@ const FileUpload = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </motion.div>
     );
 };
 
