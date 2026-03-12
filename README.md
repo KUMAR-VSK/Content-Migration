@@ -17,6 +17,31 @@ A premium full-stack application built with **React.js** and **Spring Boot** to 
 
 ---
 
+## 📊 Migration Flow
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant R as React Frontend
+    participant S as Spring Boot API
+    participant P as DOCX Parser (Apache POI)
+    participant D as Document360 API
+
+    U->>R: Upload .docx file & Set Title
+    R->>S: POST /api/migrate/parse (File)
+    S->>P: Extract Elements & Images
+    P->>S: Return Generated HTML
+    S-->>R: HTML Response
+    R->>U: Display Preview & Scanning Animation
+    U->>R: Confirm Migration
+    R->>S: POST /api/migrate (Title, Content, Category)
+    S->>D: Create Article Request
+    D-->>S: 201 Created Response
+    S-->>R: Success Status
+    R->>U: Show Success Message
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Frontend
