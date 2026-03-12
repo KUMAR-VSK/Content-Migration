@@ -29,6 +29,7 @@ const FileUpload = () => {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [taskProgress, setTaskProgress] = useState([]);
+    const [isDragging, setIsDragging] = useState(false);
     
     const fileInputRef = useRef(null);
 
@@ -68,6 +69,34 @@ const FileUpload = () => {
         if (!title) setTitle(selectedFile.name.replace('.docx', ''));
         setError('');
     };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loading && step === 1) {
+            setIsDragging(true);
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        
+        if (loading || step !== 1) return;
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const fakeEvent = { target: { files: e.dataTransfer.files } };
+            handleFileChange(fakeEvent);
+        }
+    };
+
 
     const startProcessing = async () => {
         if (!file || !title) {
@@ -233,8 +262,11 @@ const FileUpload = () => {
                         </div>
 
                         <div 
-                            className="drop-zone"
+                            className={`drop-zone ${isDragging ? 'dragging' : ''}`}
                             onClick={() => !loading && fileInputRef.current.click()}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
                         >
                             <input 
                                 type="file" 
