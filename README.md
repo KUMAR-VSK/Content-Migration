@@ -56,7 +56,13 @@ cd backend
 - **Base URL**: `http://localhost:8080`
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 
-### 4. Run the Frontend
+### 4. Run Tests (Optional)
+```bash
+cd backend
+./mvnw test
+```
+
+### 5. Run the Frontend
 ```bash
 cd frontend
 npm install
@@ -85,6 +91,7 @@ The application includes multi-layered validation to ensure data integrity:
 - **Size Limits**: Enforced 10MB file size limit to prevent server overload.
 - **Parsing Errors**: Robust handling of corrupt or password-protected documents with user-friendly error messages.
 - **API Resilience**: Specific handling for Document360 API failures (e.g., 401 Unauthorized, 403 Forbidden) with actionable feedback for the user.
+- **🛡️ Quality Assurance**: Includes a comprehensive suite of **JUnit 5** and **Mockito** backend tests for controllers and document parsing.
 
 ---
 
