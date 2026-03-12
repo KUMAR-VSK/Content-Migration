@@ -149,7 +149,8 @@ const FileUpload = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${title.replace(/\s+/g, '_')}.html`;
+        const fileName = file ? file.name.replace(/\.[^/.]+$/, "") : (title || 'document');
+        a.download = `${fileName}.html`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -360,10 +361,16 @@ const FileUpload = () => {
                 }
                 .ql-editor { 
                     min-height: 450px; 
-                    overflow-y: visible; 
+                    max-height: 600px;
+                    overflow-y: auto; 
                     padding: 2rem !important;
                     line-height: 2rem !important;
+                    scrollbar-width: thin;
+                    scrollbar-color: #cbd5e1 transparent;
                 }
+                .ql-editor::-webkit-scrollbar { width: 6px; }
+                .ql-editor::-webkit-scrollbar-track { background: transparent; }
+                .ql-editor::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
             `}</style>
         </div>
     );
@@ -380,17 +387,19 @@ const quillModules = {
 
 const styles = {
     cardHeader: {
-        fontSize: '1.75rem',
+        fontSize: '2rem',
         fontWeight: 800,
-        marginBottom: '1.5rem',
-        color: '#1e293b',
-        textAlign: 'left'
+        marginBottom: '1rem',
+        color: '#0f172a',
+        textAlign: 'left',
+        letterSpacing: '-0.02em'
     },
     grid: {
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '1.5rem',
-        marginBottom: '1.5rem'
+        gridTemplateColumns: '1.5fr 1fr',
+        gap: '2rem',
+        marginBottom: '2rem',
+        textAlign: 'left'
     },
     inputGroup: {
         display: 'flex',
@@ -399,17 +408,21 @@ const styles = {
     label: {
         fontSize: '0.875rem',
         fontWeight: 600,
-        marginBottom: '0.6rem',
-        color: '#475569'
+        marginBottom: '0.75rem',
+        color: '#475569',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em'
     },
     input: {
-        padding: '12px 16px',
-        borderRadius: '12px',
-        border: '2px solid #e2e8f0',
+        padding: '14px 20px',
+        borderRadius: '16px',
+        border: '2px solid #f1f5f9',
         fontSize: '1rem',
         outline: 'none',
-        transition: 'all 0.2s',
-        backgroundColor: '#fff',
+        transition: 'all 0.3s ease',
+        backgroundColor: '#f8fafc',
+        color: '#1e293b',
+        fontWeight: 500
     },
     selectWrapper: {
         position: 'relative',
@@ -418,205 +431,221 @@ const styles = {
     },
     select: {
         width: '100%',
-        padding: '12px 16px',
-        borderRadius: '12px',
-        border: '2px solid #e2e8f0',
+        padding: '14px 20px',
+        borderRadius: '16px',
+        border: '2px solid #f1f5f9',
         appearance: 'none',
-        fontSize: '1rem',
-        backgroundColor: '#fff',
+        fontSize: '1.0rem',
+        backgroundColor: '#f8fafc',
         outline: 'none',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        color: '#1e293b',
+        fontWeight: 500
     },
     selectIcon: {
         position: 'absolute',
-        right: '12px',
+        right: '16px',
         pointerEvents: 'none',
-        color: '#64748b'
+        color: '#94a3b8'
     },
     dropZone: {
-        border: '2px dashed #cbd5e1',
-        borderRadius: '20px',
-        padding: '3rem 1.5rem',
+        border: '2px dashed #e2e8f0',
+        borderRadius: '24px',
+        padding: '4rem 2rem',
         textAlign: 'center',
         cursor: 'pointer',
-        backgroundColor: 'rgba(248, 250, 252, 0.5)',
-        marginBottom: '2rem',
+        backgroundColor: '#fbfcfd',
+        marginBottom: '2.5rem',
         position: 'relative',
-        transition: 'all 0.3s',
-        minHeight: '200px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    uploadIconCircle: {
-        width: '64px',
-        height: '64px',
-        borderRadius: '50%',
-        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+        transition: 'all 0.3s ease',
+        minHeight: '220px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        margin: '0 auto 1rem'
+        boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)'
+    },
+    uploadIconCircle: {
+        width: '80px',
+        height: '80px',
+        borderRadius: '24px',
+        backgroundColor: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto 1.5rem',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
     },
     uploadPrompt: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '0.25rem',
+        gap: '0.5rem',
     },
     fileInfo: {
         display: 'flex',
         alignItems: 'center',
-        gap: '1.25rem',
+        gap: '1.5rem',
         justifyContent: 'center',
-        color: '#1e293b',
+        color: '#0f172a',
+        padding: '1.5rem',
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
     },
     removeBtn: {
-        background: '#fee2e2',
+        background: '#fef2f2',
         border: 'none',
-        padding: '6px',
-        borderRadius: '50%',
+        padding: '8px',
+        borderRadius: '12px',
         cursor: 'pointer',
         color: '#ef4444',
         display: 'flex',
-        marginLeft: '10px'
+        marginLeft: '10px',
+        transition: 'all 0.2s'
     },
     button: {
         width: '100%',
-        padding: '16px',
-        borderRadius: '14px',
+        padding: '18px',
+        borderRadius: '20px',
         border: 'none',
         backgroundColor: '#6366f1',
         color: 'white',
-        fontSize: '1rem',
+        fontSize: '1.125rem',
         fontWeight: 700,
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '0.75rem',
-        transition: 'all 0.2s',
-        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+        gap: '1rem',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.4)'
     },
     buttonDisabled: {
         width: '100%',
-        padding: '16px',
-        borderRadius: '14px',
+        padding: '18px',
+        borderRadius: '20px',
         border: 'none',
-        backgroundColor: '#e2e8f0',
+        backgroundColor: '#f1f5f9',
         color: '#94a3b8',
-        fontSize: '1rem',
+        fontSize: '1.125rem',
         fontWeight: 700,
         cursor: 'not-allowed'
     },
     editorContainer: {
-        marginBottom: '1.5rem',
+        marginBottom: '2rem',
         backgroundColor: 'white',
-        borderRadius: '12px',
+        borderRadius: '24px',
         position: 'relative',
-        minHeight: '350px'
+        minHeight: '450px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
     },
     previewHeader: {
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '1.5rem',
+        alignItems: 'center',
+        marginBottom: '2rem',
         textAlign: 'left'
     },
     previewActions: {
         display: 'flex',
-        gap: '0.75rem'
+        gap: '1rem'
     },
     iconButton: {
-        background: '#fff',
+        background: 'white',
         border: '1px solid #e2e8f0',
-        padding: '10px',
-        borderRadius: '10px',
+        padding: '12px',
+        borderRadius: '14px',
         cursor: 'pointer',
         color: '#475569',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'all 0.2s'
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
     },
     footerActions: {
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem'
+        gap: '1.25rem'
     },
     infoRow: {
         display: 'flex',
         alignItems: 'center',
-        gap: '0.5rem',
-        fontSize: '0.875rem',
+        gap: '0.75rem',
+        fontSize: '0.925rem',
         color: '#64748b',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        fontWeight: 500
     },
     successScreen: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        padding: '1rem 0'
+        padding: '2rem 0'
     },
     successIconCircleCircle: {
-        width: '100px',
-        height: '100px',
-        borderRadius: '50%',
-        backgroundColor: '#ecfdf5',
+        width: '120px',
+        height: '120px',
+        borderRadius: '40px',
+        backgroundColor: '#f0fdf4',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: '1.5rem'
+        marginBottom: '2.5rem',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
     },
     outlineButton: {
-        padding: '12px 32px',
-        borderRadius: '12px',
+        padding: '14px 40px',
+        borderRadius: '16px',
         border: '2px solid #6366f1',
         backgroundColor: 'transparent',
         color: '#6366f1',
-        fontSize: '1rem',
+        fontSize: '1.0rem',
         fontWeight: 700,
         cursor: 'pointer',
-        marginTop: '2rem',
-        transition: 'all 0.2s'
+        marginTop: '2.5rem',
+        transition: 'all 0.3s'
     },
     error: {
-        color: '#ef4444',
-        fontSize: '0.9rem',
-        marginBottom: '1.5rem',
+        color: '#e11d48',
+        fontSize: '0.925rem',
+        marginBottom: '2rem',
         display: 'flex',
         alignItems: 'center',
-        gap: '0.6rem',
+        gap: '0.75rem',
         fontWeight: 600,
-        padding: '12px',
-        backgroundColor: '#fef2f2',
-        borderRadius: '10px'
+        padding: '14px 20px',
+        backgroundColor: '#fff1f2',
+        borderRadius: '16px',
+        border: '1px solid #ffe4e6'
     },
     trackerContainer: {
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
-        padding: '1rem',
+        gap: '1.25rem',
+        padding: '1.5rem',
         textAlign: 'left',
         width: '100%',
-        maxWidth: '300px'
+        maxWidth: '340px'
     },
     trackerItem: {
         display: 'flex',
-        alignItems: 'center', gap: '1rem'
+        alignItems: 'center', gap: '1.25rem'
     },
     trackerIcon: {
-        width: '24px',
-        height: '24px',
-        borderRadius: '50%',
+        width: '32px',
+        height: '32px',
+        borderRadius: '10px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        flexShrink: 0
+        flexShrink: 0,
+        boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.05)'
     },
     trackerLabel: {
-        fontSize: '0.95rem',
-        transition: 'all 0.3s'
+        fontSize: '1rem',
+        transition: 'all 0.3s ease'
     },
     migratingOverlay: {
         position: 'absolute',
@@ -624,12 +653,13 @@ const styles = {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(255,255,255,0.8)',
+        backgroundColor: 'rgba(255,255,255,0.92)',
         zIndex: 10,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: '12px'
+        borderRadius: '24px',
+        backdropFilter: 'blur(4px)'
     }
 };
 

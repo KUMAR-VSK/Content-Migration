@@ -1,20 +1,21 @@
 :root {
   --primary: #6366f1;
   --primary-hover: #4f46e5;
-  --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  --card-bg: rgba(255, 255, 255, 0.9);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  --text-main: #1e293b;
-  --text-muted: #64748b;
+  --bg-gradient: radial-gradient(circle at top left, #f8fafc 0%, #e2e8f0 40%, #cbd5e1 100%);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  --text-main: #0f172a;
+  --text-muted: #475569;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg-gradient);
   min-height: 100vh;
   color: var(--text-main);
+  background-attachment: fixed;
 }
 
 #root {
@@ -25,76 +26,81 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
+  padding: 4rem 2rem;
+  min-height: 100vh;
 }
 
 .App-header {
   text-align: center;
-  margin-bottom: 3rem;
-  animation: fadeInDown 0.8s ease-out;
+  margin-bottom: 4rem;
 }
 
 .App-header h1 {
-  font-size: 3rem;
-  background: linear-gradient(to right, #6366f1, #a855f7);
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-  font-weight: 800;
+  margin-bottom: 0.75rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.App-header p {
+  font-size: 1.125rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 .migration-card {
   background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-  padding: 3rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--glass-shadow);
+  padding: 3.5rem;
   width: 100%;
-  max-width: 800px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 900px;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: float 6s ease-in-out infinite;
 }
 
-.migration-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
 /* Custom Quill Styles */
 .quill {
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.ql-toolbar {
+  border-bottom: 1px solid #f1f5f9 !important;
 }
 
 .ql-editor {
   text-align: left;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
 .ql-editor img {
   max-width: 100%;
-  border-radius: 8px;
-  margin: 10px 0;
+  border-radius: 12px;
+  margin: 20px 0;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
 }
 
 pre {
-  background: #0f172a;
-  color: #38bdf8;
-  padding: 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  overflow-x: auto;
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 1.5rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  margin: 1.5rem 0;
 }
